@@ -1,0 +1,724 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>India Tech Jobs 2026 | Market Intelligence Portal</title>
+    <!-- Google Fonts, Lucide Icons & Chart.js -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+
+    <!-- TOP NAVIGATION BAR -->
+    <nav class="navbar">
+        <a href="#overview" class="brand-wrapper">
+            <div class="brand-icon">
+                <i data-lucide="layers"></i>
+            </div>
+            <div>
+                <div class="brand-title">India Tech Jobs 2026</div>
+                <div class="brand-sub">Market Intelligence Portal</div>
+            </div>
+        </a>
+
+        <ul class="nav-links">
+            <li><a href="#overview" class="nav-link active"><i data-lucide="layout-grid"></i> Overview</a></li>
+            <li><a href="#query-engine" class="nav-link"><i data-lucide="sparkles"></i> SQL Search</a></li>
+            <li><a href="#questions" class="nav-link"><i data-lucide="help-circle"></i> Key Questions</a></li>
+            <li><a href="#analytics" class="nav-link"><i data-lucide="bar-chart-2"></i> Market Charts</a></li>
+            <li><a href="#explorer" class="nav-link"><i data-lucide="table"></i> Dataset Explorer</a></li>
+        </ul>
+    </nav>
+
+    <!-- SAFE EMBEDDED JSON SCRIPT DATA FOR CHARTS -->
+    <script id="city-chart-data" type="application/json">{{ city_chart_json|safe }}</script>
+    <script id="workmode-chart-data" type="application/json">{{ workmode_chart_json|safe }}</script>
+    <script id="domain-salary-chart-data" type="application/json">{{ domain_salary_chart_json|safe }}</script>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <div class="container">
+
+        <!-- OVERVIEW HEADER & KPI STRIP -->
+        <section id="overview" class="hero-card">
+            <div class="hero-badge">
+                <i data-lucide="shield"></i> Enterprise Data Engine &amp; Analytics
+            </div>
+            <h1 class="hero-title">Indian Tech Jobs 2026 Analytics Portal</h1>
+            <p class="hero-desc">
+                An enterprise data analytics portal unifying <strong>23,201 active software engineering and data science job postings</strong> across India's premier technology hubs. Designed to provide transparent salary benchmarks, map remote work adoption, and track technical skill demand.
+            </p>
+
+            <!-- ANALYTICAL KPI STRIP -->
+            <div class="metric-grid">
+                <div class="metric-card">
+                    <div class="metric-icon"><i data-lucide="briefcase"></i></div>
+                    <div class="metric-body">
+                        <span class="metric-label">TOTAL JOB POSTINGS</span>
+                        <div class="metric-val">{{ summary.total_jobs|default:"23201" }}</div>
+                        <div class="metric-sub">Active Listings Indexed</div>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-icon"><i data-lucide="trending-up"></i></div>
+                    <div class="metric-body">
+                        <span class="metric-label">AVG PACKAGE (LPA)</span>
+                        <div class="metric-val">{{ summary.avg_salary_lpa }} LPA</div>
+                        <div class="metric-sub">Disclosed Package Midpoint</div>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-icon"><i data-lucide="globe"></i></div>
+                    <div class="metric-body">
+                        <span class="metric-label">REMOTE ROLES</span>
+                        <div class="metric-val">{{ summary.remote_pct }}%</div>
+                        <div class="metric-sub">Fully Remote Setup</div>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-icon"><i data-lucide="graduation-cap"></i></div>
+                    <div class="metric-body">
+                        <span class="metric-label">FRESHER ROLES</span>
+                        <div class="metric-val">{{ summary.fresher_pct }}%</div>
+                        <div class="metric-sub">0-2 Years Experience</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- SMART NATURAL LANGUAGE SQL ENGINE WORKSPACE -->
+        <section id="query-engine">
+            <h2 class="section-title"><i data-lucide="sparkles"></i> Smart Natural Language SQL Engine</h2>
+            <p class="section-sub">Convert English questions into PostgreSQL SQL queries executed live on Supabase.</p>
+
+            <div class="card">
+                <div style="display: flex; gap: 1rem; margin-bottom: 1.25rem; align-items: stretch;">
+                    <textarea id="prompt-input" class="input-prompt-area" style="flex: 1; resize: vertical;" placeholder="Ask questions in plain English... (e.g. 'Top 5 companies with highest average salary for Data Scientists')"></textarea>
+                    <button class="btn-btn-primary" style="align-self: stretch; padding: 0 1.5rem; white-space: nowrap;" onclick="executePrompt()">
+                        <i data-lucide="play"></i> Run Analysis
+                    </button>
+                </div>
+
+                <!-- Generated SQL Viewer -->
+                <div style="display: none;" class="sql-editor-container" id="sql-box-container">
+                    <div class="sql-editor-toolbar">
+                        <span><i data-lucide="code"></i> Auto-Generated PostgreSQL Query (OpenRouter LLM)</span>
+                        <button class="btn-btn-outline" style="padding: 0.2rem 0.65rem; font-size: 0.75rem; background: transparent; color: #fff; border-color: #475569;" onclick="runCustomSQL()">
+                            <i data-lucide="play"></i> Execute Edited SQL
+                        </button>
+                    </div>
+                    <pre class="sql-editor-pre" id="sql-display" contenteditable="true" spellcheck="false"></pre>
+                </div>
+
+                <!-- Execution Metrics -->
+                <div class="metric-grid" id="sql-metrics-bar" style="display: none; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-top:0; margin-bottom: 1.25rem;">
+                    <div class="metric-card" style="padding: 0.85rem;">
+                        <div class="metric-label"><i data-lucide="clock"></i> Execution Time</div>
+                        <div class="metric-val" style="font-size: 1.3rem; color: var(--success);" id="metric-time">0 ms</div>
+                    </div>
+                    <div class="metric-card" style="padding: 0.85rem;">
+                        <div class="metric-label"><i data-lucide="database"></i> Rows Returned</div>
+                        <div class="metric-val" style="font-size: 1.3rem; color: var(--primary);" id="metric-count">0</div>
+                    </div>
+                    <div class="metric-card" style="padding: 0.85rem;">
+                        <div class="metric-label"><i data-lucide="cpu"></i> AI Engine</div>
+                        <div class="metric-val" style="font-size: 1.3rem; color: var(--warning);" id="metric-model">LLM</div>
+                    </div>
+                </div>
+
+                <!-- Results Output Area -->
+                <div id="sql-results-wrapper" style="display: none;">
+                    <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                        <button class="btn-btn-outline" id="tab-table-btn" onclick="switchSqlTab('table')"><i data-lucide="table"></i> Query Results Table</button>
+                        <button class="btn-btn-outline" id="tab-chart-btn" onclick="switchSqlTab('chart')"><i data-lucide="bar-chart-2"></i> Data Chart</button>
+                    </div>
+
+                    <div class="table-card" id="sql-view-table">
+                        <div class="table-wrapper">
+                            <table class="data-table">
+                                <thead><tr id="sql-table-head"></tr></thead>
+                                <tbody id="sql-table-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="table-card" id="sql-view-chart" style="display: none; padding: 1.25rem; height: 350px;">
+                        <canvas id="resultChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- KEY BUSINESS QUESTIONS (ANALYSIS LIBRARY) -->
+        <section id="questions">
+            <h2 class="section-title"><i data-lucide="book-open"></i> Analysis Library (Key Questions)</h2>
+            <p class="section-sub">Select a category and click any query item to execute it on the query workspace.</p>
+
+            <div class="questions-card">
+                <div class="q-nav">
+                    <button class="q-tab active" onclick="switchQCategory('salary', this)"><i data-lucide="dollar-sign"></i> Salary & Compensation</button>
+                    <button class="q-tab" onclick="switchQCategory('remote', this)"><i data-lucide="map-pin"></i> Remote & Location</button>
+                    <button class="q-tab" onclick="switchQCategory('freshers', this)"><i data-lucide="user-check"></i> Fresher Career Entry</button>
+                    <button class="q-tab" onclick="switchQCategory('skills', this)"><i data-lucide="zap"></i> Technical Skills</button>
+                </div>
+
+                <div class="q-grid" id="q-items-container">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
+        </section>
+
+
+        <!-- VISUAL MARKET CHARTS -->
+        <section id="analytics">
+            <h2 class="section-title"><i data-lucide="line-chart"></i> Market Analytics & Visualizations</h2>
+            <p class="section-sub">Analytical charts computed directly from the 23,201 job records.</p>
+
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <div class="chart-title"><i data-lucide="bar-chart-2"></i> Top 5 Tech Hiring Hubs</div>
+                    <div class="chart-box">
+                        <canvas id="cityOverviewChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-title"><i data-lucide="pie-chart"></i> Work Setup Split</div>
+                    <div class="chart-box">
+                        <canvas id="workmodeOverviewChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-title"><i data-lucide="trending-up"></i> Avg LPA Salary by Domain</div>
+                    <div class="chart-box">
+                        <canvas id="domainSalaryOverviewChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- DATASET EXPLORER (DATA CATALOG) -->
+        <section id="explorer">
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 0.75rem;">
+                <div>
+                    <h2 class="section-title"><i data-lucide="database"></i> Dataset Explorer (Data Catalog)</h2>
+                    <p class="section-sub" style="margin-bottom: 0;">Search, filter, and inspect detailed job records in real-time.</p>
+                </div>
+                <button class="btn-btn-outline" onclick="exportExplorerCSV()"><i data-lucide="download"></i> Export CSV</button>
+            </div>
+
+            <!-- Metadata Header Bar -->
+            <div class="catalog-header-bar">
+                <div class="catalog-meta-item"><i data-lucide="layers" style="width:14px; height:14px;"></i> Total Records: <strong>23,201</strong></div>
+                <div class="catalog-meta-item"><i data-lucide="file-text" style="width:14px; height:14px;"></i> Schema Fields: <strong>10 Attributes</strong></div>
+                <div class="catalog-meta-item"><i data-lucide="calendar" style="width:14px; height:14px;"></i> Coverage: <strong>2026 Hiring Data</strong></div>
+                <div class="catalog-meta-item"><i data-lucide="server" style="width:14px; height:14px;"></i> Engine: <strong>Supabase PostgreSQL</strong></div>
+            </div>
+
+            <!-- Controls Bar -->
+            <div class="controls-bar" style="margin-bottom: 1rem;">
+                <input type="text" id="explorer-search" class="input-search" placeholder="Search by Job Title, Company, or Skill (e.g. Data Scientist, Python)...">
+
+                <select id="filter-city" class="select-filter" onchange="fetchExplorerData(1)">
+                    <option value="">All Cities</option>
+                    {% for c in cities %}
+                        <option value="{{ c }}">{{ c }}</option>
+                    {% endfor %}
+                </select>
+
+                <select id="filter-domain" class="select-filter" onchange="fetchExplorerData(1)">
+                    <option value="">All Tech Domains</option>
+                    {% for d in domains %}
+                        <option value="{{ d }}">{{ d }}</option>
+                    {% endfor %}
+                </select>
+
+                <select id="filter-workmode" class="select-filter" onchange="fetchExplorerData(1)">
+                    <option value="">All Work Modes</option>
+                    {% for w in work_modes %}
+                        <option value="{{ w }}">{{ w }}</option>
+                    {% endfor %}
+                </select>
+
+                <select id="filter-salary" class="select-filter" onchange="fetchExplorerData(1)">
+                    <option value="0">Min Salary (Any)</option>
+                    <option value="10">> 10 LPA</option>
+                    <option value="15">> 15 LPA</option>
+                    <option value="25">> 25 LPA</option>
+                </select>
+
+                <button class="btn-btn-primary" onclick="fetchExplorerData(1)"><i data-lucide="filter"></i> Apply Filters</button>
+                <button class="btn-btn-outline" onclick="resetFilters()"><i data-lucide="rotate-ccw"></i> Reset</button>
+            </div>
+
+            <!-- Table Card -->
+            <div class="table-card">
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Job Title</th>
+                                <th>Company</th>
+                                <th>City</th>
+                                <th>Domain</th>
+                                <th>Salary (LPA)</th>
+                                <th>Exp (Yrs)</th>
+                                <th>Work Setup</th>
+                                <th>Key Technical Skills</th>
+                            </tr>
+                        </thead>
+                        <tbody id="explorer-table-body">
+                            <tr><td colspan="9" style="text-align:center; padding: 2rem; color: var(--text-muted);">Loading dataset records...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="table-footer">
+                    <div id="explorer-pagination-info">Showing records...</div>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <button class="btn-btn-outline" id="btn-prev" onclick="changePage(-1)"><i data-lucide="chevron-left"></i> Previous</button>
+                        <span style="font-weight: 700; color: var(--text-primary); padding: 0.25rem 0.65rem; background: var(--surface-secondary); border-radius: 4px; border: 1px solid var(--border);" id="current-page-num">1</span>
+                        <button class="btn-btn-outline" id="btn-next" onclick="changePage(1)">Next <i data-lucide="chevron-right"></i></button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- FOOTER METHODOLOGY NOTICE -->
+        <footer style="margin-top: 2rem; padding-top: 1.25rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; color: var(--text-muted); flex-wrap: wrap; gap: 0.75rem;">
+            <div>
+                <strong>India Tech Jobs 2026</strong> | Enterprise Market Intelligence Portal
+            </div>
+            <div>
+                Data Coverage: 23,201 Indexed Listings | Source: Indian Tech Hiring Dataset (Supabase PostgreSQL)
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- JOB DETAIL MODAL -->
+    <div class="modal-backdrop" id="jobModal">
+        <div class="modal-card">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                <div>
+                    <h3 id="modal-title" style="font-size: 1.2rem; font-weight: 800; color: var(--text-primary);">Job Title</h3>
+                    <div id="modal-company" style="color: var(--primary); font-weight: 700; font-size: 0.9rem;">Company Name</div>
+                </div>
+                <button class="btn-btn-outline" onclick="closeModal()"><i data-lucide="x"></i> Close</button>
+            </div>
+            <hr style="border-color: var(--border); margin-bottom: 1rem;">
+            <div style="display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.88rem;">
+                <div><strong>Primary City:</strong> <span id="modal-location">-</span></div>
+                <div><strong>Tech Domain:</strong> <span id="modal-domain">-</span></div>
+                <div><strong>Salary Package:</strong> <span id="modal-salary" style="color: var(--success); font-weight:700;">-</span> LPA</div>
+                <div><strong>Experience Needed:</strong> <span id="modal-exp">-</span> Years</div>
+                <div><strong>Work Setup:</strong> <span id="modal-workmode">-</span></div>
+                <div><strong>Required Technical Skills:</strong></div>
+                <div id="modal-skills" style="background: var(--surface-secondary); padding: 0.75rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.82rem; color: var(--primary); border: 1px solid var(--border);">-</div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- JAVASCRIPT LOGIC -->
+    {{ categorized_questions|json_script:"categorized-questions-data" }}
+    <script>
+        const questionsData = JSON.parse(document.getElementById('categorized-questions-data').textContent);
+
+        let cityChartData = { labels: [], values: [] };
+        let workmodeChartData = { labels: [], values: [] };
+        let domainSalaryChartData = { labels: [], values: [] };
+
+        try {
+            cityChartData = JSON.parse(document.getElementById('city-chart-data').textContent);
+            workmodeChartData = JSON.parse(document.getElementById('workmode-chart-data').textContent);
+            domainSalaryChartData = JSON.parse(document.getElementById('domain-salary-chart-data').textContent);
+        } catch (e) {
+            console.error("Error reading chart JSON script data:", e);
+        }
+
+        let currentPage = 1;
+        let chartInstance = null;
+        let lastExplorerData = null;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            switchQCategory('salary', document.querySelector('.q-tab'));
+            initOverviewCharts();
+            fetchExplorerData(1);
+
+            document.getElementById("explorer-search").addEventListener("keydown", (e) => {
+                if (e.key === "Enter") fetchExplorerData(1);
+            });
+
+            if (window.lucide) {
+                lucide.createIcons();
+            }
+        });
+
+        function switchQCategory(catKey, btnEl) {
+            document.querySelectorAll('.q-tab').forEach(b => b.classList.remove('active'));
+            if (btnEl) btnEl.classList.add('active');
+
+            const container = document.getElementById("q-items-container");
+            const items = questionsData[catKey] || [];
+
+            container.innerHTML = items.map(q => `
+                <div class="q-card">
+                    <div>
+                        <div class="q-title">${q.title}</div>
+                        <div class="q-prompt">${q.prompt}</div>
+                    </div>
+                    <button class="btn-ask" onclick="runSuggestedPrompt('${escapeHtml(q.prompt)}')">
+                        Run Analysis <i data-lucide="arrow-right"></i>
+                    </button>
+                </div>
+            `).join('');
+
+            if (window.lucide) {
+                lucide.createIcons();
+            }
+        }
+
+        function runSuggestedPrompt(promptText) {
+            document.getElementById("prompt-input").value = promptText;
+            document.getElementById("query-engine").scrollIntoView({ behavior: 'smooth' });
+            executePrompt();
+        }
+
+        function initOverviewCharts() {
+            // Chart 1: Cities
+            const ctx1 = document.getElementById("cityOverviewChart");
+            if (ctx1 && cityChartData.labels.length) {
+                new Chart(ctx1.getContext("2d"), {
+                    type: 'bar',
+                    data: {
+                        labels: cityChartData.labels,
+                        datasets: [{
+                            label: 'Job Postings',
+                            data: cityChartData.values,
+                            backgroundColor: '#2563eb',
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { ticks: { color: '#64748b' }, grid: { color: '#e2e8f0' } },
+                            y: { ticks: { color: '#64748b' }, grid: { color: '#e2e8f0' } }
+                        }
+                    }
+                });
+            }
+
+            // Chart 2: Work Modes
+            const ctx2 = document.getElementById("workmodeOverviewChart");
+            if (ctx2 && workmodeChartData.labels.length) {
+                new Chart(ctx2.getContext("2d"), {
+                    type: 'doughnut',
+                    data: {
+                        labels: workmodeChartData.labels,
+                        datasets: [{
+                            data: workmodeChartData.values,
+                            backgroundColor: ['#2563eb', '#d97706', '#059669'],
+                            borderWidth: 3,
+                            borderColor: '#ffffff',
+                            hoverOffset: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '62%',
+                        layout: {
+                            padding: { top: 8, bottom: 4, left: 8, right: 8 }
+                        },
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'bottom',
+                                align: 'center',
+                                labels: {
+                                    color: '#334155',
+                                    font: { size: 12, weight: '600', family: "'Plus Jakarta Sans', sans-serif" },
+                                    padding: 16,
+                                    boxWidth: 12,
+                                    boxHeight: 12,
+                                    borderRadius: 3,
+                                    useBorderRadius: true,
+                                    usePointStyle: false
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(ctx) {
+                                        const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                                        const pct = ((ctx.parsed / total) * 100).toFixed(1);
+                                        return ` ${ctx.label}: ${ctx.parsed.toLocaleString()} (${pct}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Chart 3: Domain Salaries
+            const ctx3 = document.getElementById("domainSalaryOverviewChart");
+            if (ctx3 && domainSalaryChartData.labels.length) {
+                new Chart(ctx3.getContext("2d"), {
+                    type: 'bar',
+                    data: {
+                        labels: domainSalaryChartData.labels,
+                        datasets: [{
+                            label: 'Avg Salary LPA',
+                            data: domainSalaryChartData.values,
+                            backgroundColor: '#059669',
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { ticks: { color: '#64748b' }, grid: { color: '#e2e8f0' } },
+                            y: { ticks: { color: '#64748b' }, grid: { color: '#e2e8f0' } }
+                        }
+                    }
+                });
+            }
+        }
+
+        async function fetchExplorerData(page) {
+            currentPage = page;
+            const search = document.getElementById("explorer-search").value.trim();
+            const city = document.getElementById("filter-city").value;
+            const domain = document.getElementById("filter-domain").value;
+            const work_mode = document.getElementById("filter-workmode").value;
+            const min_salary = document.getElementById("filter-salary").value;
+
+            const queryParams = new URLSearchParams({
+                search: search, city: city, domain: domain, work_mode: work_mode, min_salary: min_salary, page: page, page_size: 10
+            });
+
+            try {
+                const res = await fetch(`/api/dataset-browse/?${queryParams}`);
+                const data = await res.json();
+                if (!data.success) return;
+                lastExplorerData = data;
+
+                const tbody = document.getElementById("explorer-table-body");
+                if (data.rows.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding: 2rem; color: var(--text-muted);">No matching job records found.</td></tr>`;
+                } else {
+                    tbody.innerHTML = data.rows.map((row, idx) => {
+                        const rowNum = (page - 1) * 10 + idx + 1;
+                        const tagClass = row[9] ? (row[9].includes('Remote') ? 'tag-remote' : row[9].includes('Hybrid') ? 'tag-hybrid' : 'tag-onsite') : '';
+                        return `
+                            <tr onclick='openJobModal(${JSON.stringify(row).replace(/'/g, "&apos;")})'>
+                                <td style="color:var(--text-muted);">${rowNum}</td>
+                                <td style="font-weight:700; color:var(--text-primary);">${escapeHtml(row[1] || '')}</td>
+                                <td style="color:var(--primary); font-weight:600;">${escapeHtml(row[2] || '')}</td>
+                                <td>${escapeHtml(row[4] || '')}</td>
+                                <td>${escapeHtml(row[5] || '')}</td>
+                                <td style="font-weight:700; color:var(--success);">${row[6] ? row[6] + ' LPA' : 'Undisclosed'}</td>
+                                <td>${row[7]}-${row[8]} Yrs</td>
+                                <td><span class="tag-badge ${tagClass}">${escapeHtml(row[9] || 'On-site')}</span></td>
+                                <td style="font-size:0.8rem; color:var(--text-muted);">${escapeHtml(row[10] || '')}</td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+
+                document.getElementById("explorer-pagination-info").innerText = 
+                    `Showing page ${data.page} of ${data.total_pages} (${data.total_records.toLocaleString()} total records)`;
+                document.getElementById("current-page-num").innerText = data.page;
+                document.getElementById("btn-prev").disabled = data.page <= 1;
+                document.getElementById("btn-next").disabled = data.page >= data.total_pages;
+
+                if (window.lucide) {
+                    lucide.createIcons();
+                }
+
+            } catch (err) {
+                console.error("Error loading explorer data:", err);
+            }
+        }
+
+        function changePage(delta) {
+            fetchExplorerData(currentPage + delta);
+        }
+
+        function resetFilters() {
+            document.getElementById("explorer-search").value = "";
+            document.getElementById("filter-city").value = "";
+            document.getElementById("filter-domain").value = "";
+            document.getElementById("filter-workmode").value = "";
+            document.getElementById("filter-salary").value = "0";
+            fetchExplorerData(1);
+        }
+
+        function openJobModal(row) {
+            document.getElementById("modal-title").innerText = row[1] || 'Job Detail';
+            document.getElementById("modal-company").innerText = row[2] || 'Company';
+            document.getElementById("modal-location").innerText = row[4] || 'India';
+            document.getElementById("modal-domain").innerText = row[5] || 'Technology';
+            document.getElementById("modal-salary").innerText = row[6] ? row[6] : 'Undisclosed';
+            document.getElementById("modal-exp").innerText = `${row[7]} - ${row[8]}`;
+            document.getElementById("modal-workmode").innerText = row[9] || 'On-site';
+            document.getElementById("modal-skills").innerText = row[10] || 'Not specified';
+            document.getElementById("jobModal").style.display = "flex";
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function closeModal() {
+            document.getElementById("jobModal").style.display = "none";
+        }
+
+        async function executePrompt() {
+            const prompt = document.getElementById("prompt-input").value.trim();
+            if (!prompt) return;
+
+            try {
+                const res = await fetch("/api/generate-execute/", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ prompt: prompt })
+                });
+                const data = await res.json();
+                if (!data.success) {
+                    alert("Error: " + data.error);
+                    return;
+                }
+                renderSqlResults(data);
+            } catch (err) {
+                alert("Query error: " + err.message);
+            }
+        }
+
+        async function runCustomSQL() {
+            const sql = document.getElementById("sql-display").innerText.trim();
+            if (!sql) return;
+
+            try {
+                const res = await fetch("/api/generate-execute/", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ custom_sql: sql })
+                });
+                const data = await res.json();
+                if (!data.success) {
+                    alert("Error executing custom SQL: " + data.error);
+                    return;
+                }
+                renderSqlResults(data);
+            } catch (err) {
+                alert("SQL Error: " + err.message);
+            }
+        }
+
+        function renderSqlResults(data) {
+            document.getElementById("sql-box-container").style.display = "block";
+            document.getElementById("sql-metrics-bar").style.display = "grid";
+            document.getElementById("sql-results-wrapper").style.display = "block";
+
+            document.getElementById("sql-display").innerText = data.sql;
+            document.getElementById("metric-time").innerText = `${data.execution_time_ms} ms`;
+            document.getElementById("metric-count").innerText = data.row_count.toLocaleString();
+            document.getElementById("metric-model").innerText = data.model || "LLM";
+
+            const headRow = document.getElementById("sql-table-head");
+            headRow.innerHTML = data.columns.map(c => `<th>${c}</th>`).join('');
+
+            const tbody = document.getElementById("sql-table-body");
+            if (data.rows.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="${data.columns.length}" style="text-align:center; padding:1.5rem; color:var(--text-muted);">No records found.</td></tr>`;
+            } else {
+                tbody.innerHTML = data.rows.map(row => `
+                    <tr>${row.map(v => `<td>${v !== null ? escapeHtml(v.toString()) : 'NULL'}</td>`).join('')}</tr>
+                `).join('');
+            }
+
+            if (data.chart_data && data.chart_data.labels.length > 0) {
+                document.getElementById("tab-chart-btn").style.display = "inline-flex";
+                renderResultChart(data.chart_data);
+            } else {
+                document.getElementById("tab-chart-btn").style.display = "none";
+                switchSqlTab('table');
+            }
+
+            if (window.lucide) {
+                lucide.createIcons();
+            }
+        }
+
+        function renderResultChart(chartData) {
+            const ctx = document.getElementById("resultChart").getContext("2d");
+            if (chartInstance) chartInstance.destroy();
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: chartData.labels,
+                    datasets: [{
+                        label: `${chartData.value_column} by ${chartData.label_column}`,
+                        data: chartData.values,
+                        backgroundColor: '#2563eb',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#475569' } } },
+                    scales: {
+                        x: { ticks: { color: '#64748b' }, grid: { color: '#e2e8f0' } },
+                        y: { ticks: { color: '#64748b' }, grid: { color: '#e2e8f0' } }
+                    }
+                }
+            });
+        }
+
+        function switchSqlTab(tab) {
+            if (tab === 'table') {
+                document.getElementById('sql-view-table').style.display = 'block';
+                document.getElementById('sql-view-chart').style.display = 'none';
+            } else {
+                document.getElementById('sql-view-table').style.display = 'none';
+                document.getElementById('sql-view-chart').style.display = 'block';
+            }
+        }
+
+        function exportExplorerCSV() {
+            if (!lastExplorerData || !lastExplorerData.rows.length) return;
+            let csv = "data:text/csv;charset=utf-8," + lastExplorerData.columns.join(",") + "\n";
+            lastExplorerData.rows.forEach(r => {
+                csv += r.map(v => `"${(v || '').toString().replace(/"/g, '""')}"`).join(",") + "\n";
+            });
+            const link = document.createElement("a");
+            link.setAttribute("href", encodeURI(csv));
+            link.setAttribute("download", `india_tech_jobs_explorer_${Date.now()}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+    </script>
+</body>
+</html>
