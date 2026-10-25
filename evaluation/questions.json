@@ -1,0 +1,141 @@
+[
+  {
+    "id": 1,
+    "category": "salary",
+    "question": "What is the average salary midpoint LPA by skill domain?",
+    "golden_sql": "SELECT skill_domain, ROUND(AVG(salary_midpoint_lpa)::numeric, 2) AS avg_salary FROM indian_tech_jobs WHERE salary_midpoint_lpa > 0 AND skill_domain IS NOT NULL AND skill_domain != '' GROUP BY skill_domain ORDER BY avg_salary DESC;"
+  },
+  {
+    "id": 2,
+    "category": "remote",
+    "question": "How many total job postings are there for each work mode?",
+    "golden_sql": "SELECT work_mode, COUNT(*) AS job_count FROM indian_tech_jobs WHERE work_mode IS NOT NULL AND work_mode != '' GROUP BY work_mode ORDER BY job_count DESC;"
+  },
+  {
+    "id": 3,
+    "category": "companies",
+    "question": "What are the top 5 hiring companies by total job postings?",
+    "golden_sql": "SELECT company_name, COUNT(*) AS total_jobs FROM indian_tech_jobs WHERE company_name IS NOT NULL AND company_name != '' GROUP BY company_name ORDER BY total_jobs DESC LIMIT 5;"
+  },
+  {
+    "id": 4,
+    "category": "freshers",
+    "question": "What is the count of fresher-friendly roles grouped by primary city for the top 5 cities?",
+    "golden_sql": "SELECT primary_city, COUNT(*) AS fresher_jobs FROM indian_tech_jobs WHERE is_fresher_friendly = TRUE AND primary_city IS NOT NULL AND primary_city != '' GROUP BY primary_city ORDER BY fresher_jobs DESC LIMIT 5;"
+  },
+  {
+    "id": 5,
+    "category": "salary",
+    "question": "What are the top 5 highest paying job titles by average salary midpoint?",
+    "golden_sql": "SELECT job_title, ROUND(AVG(salary_midpoint_lpa)::numeric, 2) AS avg_salary FROM indian_tech_jobs WHERE salary_midpoint_lpa > 0 AND job_title IS NOT NULL AND job_title != '' GROUP BY job_title ORDER BY avg_salary DESC LIMIT 5;"
+  },
+  {
+    "id": 6,
+    "category": "remote",
+    "question": "How many remote jobs require Python in their skills?",
+    "golden_sql": "SELECT COUNT(*) AS python_remote_jobs FROM indian_tech_jobs WHERE work_mode ILIKE '%remote%' AND skills_required ILIKE '%python%';"
+  },
+  {
+    "id": 7,
+    "category": "experience",
+    "question": "What is the average minimum and maximum experience required for Data Scientist roles?",
+    "golden_sql": "SELECT ROUND(AVG(experience_min_yrs)::numeric, 2) AS avg_min_exp, ROUND(AVG(experience_max_yrs)::numeric, 2) AS avg_max_exp FROM indian_tech_jobs WHERE job_title ILIKE '%data scientist%';"
+  },
+  {
+    "id": 8,
+    "category": "cities",
+    "question": "What are the top 5 cities with the highest number of tech job postings?",
+    "golden_sql": "SELECT primary_city, COUNT(*) AS total_jobs FROM indian_tech_jobs WHERE primary_city IS NOT NULL AND primary_city != '' GROUP BY primary_city ORDER BY total_jobs DESC LIMIT 5;"
+  },
+  {
+    "id": 9,
+    "category": "salary",
+    "question": "How many jobs offer negotiable salaries versus non-negotiable?",
+    "golden_sql": "SELECT salary_negotiable, COUNT(*) AS total_jobs FROM indian_tech_jobs GROUP BY salary_negotiable;"
+  },
+  {
+    "id": 10,
+    "category": "companies",
+    "question": "What is the distribution of jobs across company size buckets?",
+    "golden_sql": "SELECT company_size_bucket, COUNT(*) AS job_count FROM indian_tech_jobs WHERE company_size_bucket IS NOT NULL AND company_size_bucket != '' GROUP BY company_size_bucket ORDER BY job_count DESC;"
+  },
+  {
+    "id": 11,
+    "category": "companies",
+    "question": "Show top 5 companies with the highest average rating having at least 10 job postings.",
+    "golden_sql": "SELECT company_name, ROUND(AVG(company_rating)::numeric, 2) AS avg_rating, COUNT(*) AS postings FROM indian_tech_jobs WHERE company_name IS NOT NULL AND company_name != '' AND company_rating > 0 GROUP BY company_name HAVING COUNT(*) >= 10 ORDER BY avg_rating DESC, postings DESC LIMIT 5;"
+  },
+  {
+    "id": 12,
+    "category": "salary",
+    "question": "What percentage of jobs have salary disclosed?",
+    "golden_sql": "SELECT ROUND(COUNT(CASE WHEN salary_disclosed = TRUE THEN 1 END) * 100.0 / COUNT(*), 2) AS disclosed_pct FROM indian_tech_jobs;"
+  },
+  {
+    "id": 13,
+    "category": "salary",
+    "question": "What is the average salary midpoint in Bangalore compared to Hyderabad and Pune?",
+    "golden_sql": "SELECT primary_city, ROUND(AVG(salary_midpoint_lpa)::numeric, 2) AS avg_salary FROM indian_tech_jobs WHERE primary_city IN ('Bangalore', 'Hyderabad', 'Pune') AND salary_midpoint_lpa > 0 GROUP BY primary_city ORDER BY avg_salary DESC;"
+  },
+  {
+    "id": 14,
+    "category": "roles",
+    "question": "How many jobs are categorized as senior roles?",
+    "golden_sql": "SELECT COUNT(*) AS senior_job_count FROM indian_tech_jobs WHERE is_senior = TRUE;"
+  },
+  {
+    "id": 15,
+    "category": "skills",
+    "question": "What are the top 5 skill domains by total number of postings?",
+    "golden_sql": "SELECT skill_domain, COUNT(*) AS total_postings FROM indian_tech_jobs WHERE skill_domain IS NOT NULL AND skill_domain != '' GROUP BY skill_domain ORDER BY total_postings DESC LIMIT 5;"
+  },
+  {
+    "id": 16,
+    "category": "skills",
+    "question": "Show count of jobs requiring SQL grouped by experience tier.",
+    "golden_sql": "SELECT experience_tier, COUNT(*) AS job_count FROM indian_tech_jobs WHERE skills_required ILIKE '%sql%' AND experience_tier IS NOT NULL AND experience_tier != '' GROUP BY experience_tier ORDER BY job_count DESC;"
+  },
+  {
+    "id": 17,
+    "category": "skills",
+    "question": "What is the average number of skills required per job by work mode?",
+    "golden_sql": "SELECT work_mode, ROUND(AVG(skills_count)::numeric, 2) AS avg_skills FROM indian_tech_jobs WHERE work_mode IS NOT NULL AND work_mode != '' GROUP BY work_mode ORDER BY avg_skills DESC;"
+  },
+  {
+    "id": 18,
+    "category": "postings",
+    "question": "How many job postings were posted within the last 7 days?",
+    "golden_sql": "SELECT COUNT(*) AS recent_jobs FROM indian_tech_jobs WHERE days_since_posted <= 7;"
+  },
+  {
+    "id": 19,
+    "category": "remote",
+    "question": "List top 5 companies offering Remote jobs in AI/ML/DL domain.",
+    "golden_sql": "SELECT company_name, COUNT(*) AS remote_roles FROM indian_tech_jobs WHERE work_mode ILIKE '%remote%' AND skill_domain ILIKE '%ai%ml%' AND company_name IS NOT NULL AND company_name != '' GROUP BY company_name ORDER BY remote_roles DESC LIMIT 5;"
+  },
+  {
+    "id": 20,
+    "category": "freshers",
+    "question": "What is the average salary midpoint for fresher-friendly vs non-fresher jobs?",
+    "golden_sql": "SELECT is_fresher_friendly, ROUND(AVG(salary_midpoint_lpa)::numeric, 2) AS avg_salary FROM indian_tech_jobs WHERE salary_midpoint_lpa > 0 GROUP BY is_fresher_friendly;"
+  },
+  {
+    "id": 21,
+    "category": "salary",
+    "question": "What is the average salary midpoint LPA for Machine Learning Engineers?",
+    "golden_sql": "-- Exclude undisclosed salaries\nSELECT ROUND(AVG(salary_midpoint_lpa)::numeric, 2) AS avg_salary_ml FROM indian_tech_jobs WHERE job_title ILIKE '%machine learning engineer%' AND salary_midpoint_lpa > 0;"
+  },
+  {
+    "id": 22,
+    "category": "salary",
+    "question": "What are the top 5 highest paying companies for Senior roles by average salary?",
+    "golden_sql": "-- Exclude undisclosed salaries\nSELECT company_name, ROUND(AVG(salary_midpoint_lpa)::numeric, 2) AS avg_salary FROM indian_tech_jobs WHERE is_senior = TRUE AND salary_midpoint_lpa > 0 AND company_name IS NOT NULL AND company_name != '' GROUP BY company_name ORDER BY avg_salary DESC LIMIT 5;"
+  },
+  {
+    "id": 23,
+    "category": "salary",
+    "question": "What is the average salary midpoint LPA for remote roles versus on-site roles?",
+    "golden_sql": "-- Exclude undisclosed salaries\nSELECT work_mode, ROUND(AVG(salary_midpoint_lpa)::numeric, 2) AS avg_salary FROM indian_tech_jobs WHERE work_mode IN ('Remote', 'On-site') AND salary_midpoint_lpa > 0 GROUP BY work_mode ORDER BY avg_salary DESC;"
+  }
+]
+

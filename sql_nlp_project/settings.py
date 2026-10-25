@@ -11,6 +11,9 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-default-key-nl2sql-app')
 
 DEBUG = os.getenv('DEBUG', 'True').lower() in ('true', '1', 't')
 
+# Controls whether raw custom SQL can be submitted to /api/run-sql/
+ENABLE_RAW_SQL = os.getenv('ENABLE_RAW_SQL', 'False').lower() in ('true', '1', 't')
+
 ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [

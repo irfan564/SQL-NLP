@@ -1,7 +1,13 @@
 import os
-import django
+import sys
+from pathlib import Path
+
+# Add project root to sys.path
+BASE_DIR = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(BASE_DIR))
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'sql_nlp_project.settings')
+import django
 django.setup()
 
 from nl2sql.services import generate_sql_from_openrouter, execute_sql_query

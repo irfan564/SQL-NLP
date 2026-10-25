@@ -2,8 +2,9 @@ import json
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.conf import settings
 from django.db import connection
-from .services import generate_sql_from_openrouter, execute_sql_query
+from .services import generate_sql_from_openrouter, execute_sql_query, validate_sql
 
 CATEGORIZED_QUESTIONS = {
     "salary": [
@@ -47,7 +48,8 @@ def index(request):
     """
     summary = {
         "total_jobs": 23201,
-        "avg_salary_lpa": 14.8,
+        "avg_salary_lpa": 15.3,
+        "salary_disclosed_pct": 11.9,
         "remote_pct": 9.3,
         "fresher_pct": 18.0,
     }
@@ -62,11 +64,12 @@ def index(request):
 
     try:
         with connection.cursor() as cursor:
-            # Summary stats
+            # Summary stats: overview KPI uses AVG(salary_midpoint_lpa) WHERE salary_midpoint_lpa > 0
             cursor.execute("""
                 SELECT 
                     COUNT(*),
-                    COALESCE(ROUND(AVG(salary_midpoint_lpa)::numeric, 1), 0),
+                    COALESCE(ROUND(AVG(CASE WHEN salary_midpoint_lpa > 0 THEN salary_midpoint_lpa END)::numeric, 1), 0),
+                    ROUND(COUNT(CASE WHEN salary_midpoint_lpa > 0 THEN 1 END) * 100.0 / COUNT(*), 1),
                     ROUND(COUNT(CASE WHEN work_mode ILIKE '%remote%' THEN 1 END) * 100.0 / COUNT(*), 1),
                     ROUND(COUNT(CASE WHEN is_fresher_friendly = True THEN 1 END) * 100.0 / COUNT(*), 1)
                 FROM indian_tech_jobs;
@@ -75,8 +78,9 @@ def index(request):
             if row:
                 summary["total_jobs"] = row[0]
                 summary["avg_salary_lpa"] = float(row[1]) if row[1] else 0.0
-                summary["remote_pct"] = float(row[2]) if row[2] else 0.0
-                summary["fresher_pct"] = float(row[3]) if row[3] else 0.0
+                summary["salary_disclosed_pct"] = float(row[2]) if row[2] else 0.0
+                summary["remote_pct"] = float(row[3]) if row[3] else 0.0
+                summary["fresher_pct"] = float(row[4]) if row[4] else 0.0
 
             # Filter options
             cursor.execute("SELECT DISTINCT primary_city FROM indian_tech_jobs WHERE primary_city IS NOT NULL AND primary_city != '' ORDER BY primary_city LIMIT 30;")
@@ -221,35 +225,32 @@ def api_dataset_browse(request):
 
 
 @csrf_exempt
-def api_generate_and_execute(request):
+def api_nl2sql(request):
     """
-    AJAX Endpoint: Translates Natural Language prompt into SQL via OpenRouter,
-    executes against Supabase PostgreSQL, and returns JSON payload.
+    Translates Natural Language prompt into SQL via OpenRouter,
+    validates the SQL using validate_sql, executes read-only, and returns results.
     """
     if request.method != "POST":
         return JsonResponse({"success": False, "error": "Invalid HTTP method. Only POST is allowed."}, status=405)
 
     try:
-        data = json.loads(request.body.decode("utf-8"))
+        try:
+            data = json.loads(request.body.decode("utf-8"))
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            return JsonResponse({"success": False, "error": "Invalid JSON in request body."}, status=400)
+
         prompt = data.get("prompt", "").strip()
-        custom_sql = data.get("custom_sql", "").strip()
+        if not prompt:
+            return JsonResponse({"success": False, "error": "Please provide a natural language prompt."}, status=400)
 
-        if not prompt and not custom_sql:
-            return JsonResponse({"success": False, "error": "Please provide a natural language prompt or custom SQL query."}, status=400)
-
-        model_used = "Manual SQL Input"
-        
-        if custom_sql:
-            sql_query = custom_sql
-        else:
-            sql_query, model_used = generate_sql_from_openrouter(prompt)
-
-        result = execute_sql_query(sql_query)
+        raw_sql, model_used = generate_sql_from_openrouter(prompt)
+        validated_sql = validate_sql(raw_sql)
+        result = execute_sql_query(validated_sql)
 
         return JsonResponse({
             "success": True,
             "prompt": prompt,
-            "sql": sql_query,
+            "sql": result.get("executed_sql", validated_sql),
             "model": model_used,
             "columns": result["columns"],
             "rows": result["rows"],
@@ -259,9 +260,73 @@ def api_generate_and_execute(request):
         })
 
     except ValueError as ve:
-        return JsonResponse({"success": False, "error": str(ve), "sql": custom_sql or sql_query if 'sql_query' in locals() else ""}, status=400)
-    except Exception as e:
-        return JsonResponse({"success": False, "error": f"Execution Error: {str(e)}", "sql": sql_query if 'sql_query' in locals() else ""}, status=500)
+        return JsonResponse({"success": False, "error": str(ve)}, status=400)
+    except Exception:
+        return JsonResponse({"success": False, "error": "A database error occurred while executing the query."}, status=500)
+
+
+@csrf_exempt
+def api_run_sql(request):
+    """
+    Executes raw SQL query after validation.
+    Guarded by ENABLE_RAW_SQL setting (default False -> returns 403 Forbidden).
+    """
+    if request.method != "POST":
+        return JsonResponse({"success": False, "error": "Invalid HTTP method. Only POST is allowed."}, status=405)
+
+    if not getattr(settings, "ENABLE_RAW_SQL", False):
+        return JsonResponse({
+            "success": False,
+            "error": "Raw SQL execution is disabled. Set ENABLE_RAW_SQL=True in .env to enable."
+        }, status=403)
+
+    try:
+        try:
+            data = json.loads(request.body.decode("utf-8"))
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            return JsonResponse({"success": False, "error": "Invalid JSON in request body."}, status=400)
+
+        sql_input = data.get("sql", "").strip() or data.get("custom_sql", "").strip()
+        if not sql_input:
+            return JsonResponse({"success": False, "error": "Please provide a SQL query."}, status=400)
+
+        validated_sql = validate_sql(sql_input)
+        result = execute_sql_query(validated_sql)
+
+        return JsonResponse({
+            "success": True,
+            "sql": result.get("executed_sql", validated_sql),
+            "model": "Raw SQL",
+            "columns": result["columns"],
+            "rows": result["rows"],
+            "row_count": result["row_count"],
+            "execution_time_ms": result["execution_time_ms"],
+            "chart_data": result["chart_data"]
+        })
+
+    except ValueError as ve:
+        return JsonResponse({"success": False, "error": str(ve)}, status=400)
+    except Exception:
+        return JsonResponse({"success": False, "error": "A database error occurred while executing the query."}, status=500)
+
+
+@csrf_exempt
+def api_generate_and_execute(request):
+    """
+    Backward-compatible unified endpoint.
+    Delegates to api_run_sql if custom_sql is provided, or api_nl2sql if prompt is provided.
+    """
+    if request.method != "POST":
+        return JsonResponse({"success": False, "error": "Invalid HTTP method. Only POST is allowed."}, status=405)
+
+    try:
+        data = json.loads(request.body.decode("utf-8"))
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return JsonResponse({"success": False, "error": "Invalid JSON in request body."}, status=400)
+
+    if data.get("custom_sql"):
+        return api_run_sql(request)
+    return api_nl2sql(request)
 
 
 def api_schema(request):

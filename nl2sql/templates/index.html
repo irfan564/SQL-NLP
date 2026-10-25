@@ -47,11 +47,11 @@
         <!-- OVERVIEW HEADER & KPI STRIP -->
         <section id="overview" class="hero-card">
             <div class="hero-badge">
-                <i data-lucide="shield"></i> Enterprise Data Engine &amp; Analytics
+                <i data-lucide="shield"></i> Job Market Analytics Portal
             </div>
             <h1 class="hero-title">Indian Tech Jobs 2026 Analytics Portal</h1>
             <p class="hero-desc">
-                An enterprise data analytics portal unifying <strong>23,201 active software engineering and data science job postings</strong> across India's premier technology hubs. Designed to provide transparent salary benchmarks, map remote work adoption, and track technical skill demand.
+                An analytics portal unifying <strong>23,201 active software engineering and data science job listings</strong> across India's premier technology hubs. Designed to provide transparent salary benchmarks, map remote work adoption, and track technical skill demand.
             </p>
 
             <!-- ANALYTICAL KPI STRIP -->
@@ -61,7 +61,7 @@
                     <div class="metric-body">
                         <span class="metric-label">TOTAL JOB POSTINGS</span>
                         <div class="metric-val">{{ summary.total_jobs|default:"23201" }}</div>
-                        <div class="metric-sub">Active Listings Indexed</div>
+                        <div class="metric-sub">Total Listings</div>
                     </div>
                 </div>
 
@@ -71,6 +71,15 @@
                         <span class="metric-label">AVG PACKAGE (LPA)</span>
                         <div class="metric-val">{{ summary.avg_salary_lpa }} LPA</div>
                         <div class="metric-sub">Disclosed Package Midpoint</div>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-icon"><i data-lucide="percent"></i></div>
+                    <div class="metric-body">
+                        <span class="metric-label">SALARY DISCLOSED</span>
+                        <div class="metric-val">{{ summary.salary_disclosed_pct }}%</div>
+                        <div class="metric-sub">Midpoint > 0</div>
                     </div>
                 </div>
 
@@ -222,8 +231,8 @@
             <!-- Metadata Header Bar -->
             <div class="catalog-header-bar">
                 <div class="catalog-meta-item"><i data-lucide="layers" style="width:14px; height:14px;"></i> Total Records: <strong>23,201</strong></div>
-                <div class="catalog-meta-item"><i data-lucide="file-text" style="width:14px; height:14px;"></i> Schema Fields: <strong>10 Attributes</strong></div>
-                <div class="catalog-meta-item"><i data-lucide="calendar" style="width:14px; height:14px;"></i> Coverage: <strong>2026 Hiring Data</strong></div>
+                <div class="catalog-meta-item"><i data-lucide="file-text" style="width:14px; height:14px;"></i> Schema Fields: <strong>26 columns (10 shown)</strong></div>
+                <div class="catalog-meta-item"><i data-lucide="calendar" style="width:14px; height:14px;"></i> Coverage: <strong>[FILL: collection date range]</strong></div>
                 <div class="catalog-meta-item"><i data-lucide="server" style="width:14px; height:14px;"></i> Engine: <strong>Supabase PostgreSQL</strong></div>
             </div>
 
@@ -615,10 +624,10 @@
             if (!sql) return;
 
             try {
-                const res = await fetch("/api/generate-execute/", {
+                const res = await fetch("/api/run-sql/", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ custom_sql: sql })
+                    body: JSON.stringify({ sql: sql })
                 });
                 const data = await res.json();
                 if (!data.success) {

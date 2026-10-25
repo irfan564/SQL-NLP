@@ -1,16 +1,16 @@
-# India Tech Jobs 2026 — NL2SQL Analytics Portal
+# India Tech Jobs 2026: Natural Language to SQL Analytics Portal
 
 <div align="center">
 
 ![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![Django](https://img.shields.io/badge/Django-4.2%2B-092E20?style=for-the-badge&logo=django&logoColor=white)
+![Django](https://img.shields.io/badge/Django-5.2%2B-092E20?style=for-the-badge&logo=django&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
 ![OpenRouter](https://img.shields.io/badge/AI-OpenRouter%20LLM-FF6B35?style=for-the-badge&logo=openai&logoColor=white)
 ![Chart.js](https://img.shields.io/badge/Charts-Chart.js-FF6384?style=for-the-badge&logo=chartdotjs&logoColor=white)
 
-**An enterprise-grade analytics portal that translates plain English into live PostgreSQL queries — powered by OpenRouter LLMs and built on 23,201 Indian tech job records.**
+A Django web application that converts plain-English questions into PostgreSQL queries using LLMs via OpenRouter, featuring a hardened read-only SQL validation layer, automatic Chart.js visualizations, and an interactive dataset explorer built over 23,201 Indian tech job records.
 
-[Features](#-features) · [Architecture](#-architecture) · [Quick Start](#-quick-start) · [Dataset](#-dataset) · [AI Engine](#-ai-engine)
+[Features](#features) · [Screenshots](#screenshots) · [Architecture](#architecture) · [Quick Start](#quick-start) · [Dataset](#dataset) · [Data Notes](#data-notes) · [Key Insights](#key-insights) · [How It Works & Safety](#how-it-works--safety) · [Evaluation](#evaluation) · [Limitations](#limitations) · [Author](#author)
 
 </div>
 
@@ -18,16 +18,25 @@
 
 ## Features
 
-| Feature | Description |
-|---|---|
-| NL to SQL Engine | Type any question in plain English and get live PostgreSQL results instantly |
-| Interactive Charts | City hiring hubs, work-mode split (Remote/Hybrid/On-site), salary by domain |
-| Dataset Explorer | Filter, search and paginate all 23,201 job records |
-| Analysis Library | Pre-built question bank across Salary, Remote Work, Fresher Entry and Skills |
-| Multi-LLM Fallback | Llama 3.3 70B then Claude 3.5 Sonnet then DeepSeek R1 then GPT-4o Mini |
-| SQL Safety Guard | Server-side validation blocks all non-SELECT statements before execution |
-| Auto Chart | Aggregate query results automatically rendered as a bar/pie chart |
-| CSV Export | Export filtered explorer results with one click |
+- **Natural Language to SQL**: Translates everyday business questions into valid PostgreSQL queries.
+- **Hardened SQL Safety Layer**: Multi-step validation restricting queries to single-statement, read-only SELECT/WITH queries against an allow-listed table.
+- **Interactive Visualizations**: Automatic Chart.js rendering for aggregations, plus pre-computed KPI tiles and distribution charts.
+- **Dataset Explorer**: Paginated exploration table with multi-column filtering by city, domain, work mode, and minimum salary.
+- **Pre-Built Question Library**: Curated queries covering salary distribution, remote roles, fresher entry points, and required skills.
+- **Multi-LLM Fallback**: Primary translation via Llama 3.3 70B with automatic fallback to Claude 3.5 Sonnet, DeepSeek R1, and GPT-4o Mini.
+- **Raw SQL Protection**: Dedicated `/api/run-sql/` endpoint protected by `ENABLE_RAW_SQL` environment toggle.
+
+---
+
+## Screenshots
+
+![Analytics Portal Interface](docs/screenshots/interface.png)
+*Analytics Portal Interface: Overview KPIs, Quick Query Prompts, and Natural Language SQL Engine*
+
+![Query Execution and Analysis](docs/screenshots/analysis.png)
+*Live Query Analysis: Natural Language Prompt, Generated PostgreSQL Query, Model Attribution, and Result Statistics*
+
+- **Demo Video / Live Link**: [FILL: add a demo video or live link]
 
 ---
 
@@ -35,21 +44,20 @@
 
 ```
 Browser (Frontend)
-  Vanilla HTML + CSS (Plus Jakarta Sans) + Chart.js + Lucide Icons
-
-        |  HTTP / REST
+  HTML5 + CSS + Chart.js + Lucide Icons
+        |
+        | HTTP / REST (JSON)
         v
-
-Django 4.x Application Server
+Django Application Server
   nl2sql/views.py  -->  nl2sql/services.py
-  (REST APIs)            generate_sql_from_openrouter()
-                         execute_sql_query() [safe, read-only]
-
-        |                        |
-        v                        v
-  OpenRouter API        Supabase PostgreSQL DB
-  (LLM NL->SQL)         Table: indian_tech_jobs
-  Llama / Claude /      23,201 rows x 26 columns
+  - /api/nl2sql/         - validate_sql() [strict allowlist, comment strip, LIMIT 500]
+  - /api/run-sql/        - execute_sql_query() [READ ONLY transaction, 5s timeout]
+  - /api/dataset-browse/
+        |                           |
+        v                           v
+  OpenRouter API             Supabase PostgreSQL DB
+  (LLM Translation)          Table: indian_tech_jobs
+  Llama 3.3 / Claude /       23,201 rows x 26 columns
   DeepSeek / GPT-4o
 ```
 
@@ -60,197 +68,206 @@ Django 4.x Application Server
 ### Prerequisites
 
 - Python 3.10+
-- A [Supabase](https://supabase.com) project with the dataset loaded
-- An [OpenRouter](https://openrouter.ai) API key (free tier works)
+- A [Supabase](https://supabase.com) PostgreSQL database
+- An [OpenRouter](https://openrouter.ai) API key
 
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/<your-username>/india-tech-jobs-nl2sql.git
-cd india-tech-jobs-nl2sql
+git clone https://github.com/irfan564/SQL-NLP.git
+cd SQL-NLP
 ```
 
-### 2. Create a virtual environment
+### 2. Set up virtual environment & install dependencies
 
 ```bash
 python -m venv .venv
 
 # Windows
 .venv\Scripts\activate
-
-# macOS / Linux
+# Linux/macOS
 source .venv/bin/activate
-```
 
-### 3. Install dependencies
-
-```bash
 pip install -r requirements.txt
 ```
 
-### 4. Configure environment variables
+### 3. Configure environment variables
+
+Copy `.env.example` to `.env` and fill in your credentials:
 
 ```bash
 cp .env.example .env
 ```
 
-Open `.env` and fill in your values:
+Edit `.env`:
 
 ```env
-SECRET_KEY=your-django-secret-key
+SECRET_KEY=your-strong-django-secret-key
 DEBUG=True
-SUPABASE_DB_URL=postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres
-OPENROUTER_API_KEY=sk-or-v1-...
+SUPABASE_DB_URL=postgresql://postgres.<project-ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres
+OPENROUTER_API_KEY=sk-or-v1-your-openrouter-api-key
+ENABLE_RAW_SQL=False
 ```
 
-### 5. Seed the database (optional)
+### 4. Database Setup & Seeding
 
-If you are connecting to an existing Supabase project that already has the `indian_tech_jobs` table, skip this step.
+Run Django migrations and upload the dataset to your Supabase PostgreSQL database:
 
 ```bash
-# Edit seed_supabase.py with your DB credentials, then run:
+python manage.py migrate
 python seed_supabase.py
 ```
 
-The SQL schema is available in `sql.sql`.
-
-### 6. Run the development server
+### 5. Run the application
 
 ```bash
 python manage.py runserver
 ```
 
-Open **http://127.0.0.1:8000** in your browser.
+Open [http://127.0.0.1:8000](http://127.0.0.1:8000) in your browser.
 
 ---
 
 ## Dataset
 
-The portal is powered by **23,201 Indian Tech Job listings** from 2026 with 26 structured columns:
+The portal analyzes 23,201 Indian tech job records across 26 structured fields stored in table `indian_tech_jobs`.
 
-| Column | Description |
-|---|---|
-| `job_title` | Position name (e.g., Data Scientist, AI/ML Engineer) |
-| `company_name` | Hiring company |
-| `primary_city` | Bangalore, Hyderabad, Pune, Mumbai, Delhi, etc. |
-| `salary_midpoint_lpa` | Midpoint salary in Lakhs Per Annum |
-| `work_mode` | On-site / Hybrid / Remote |
-| `skill_domain` | AI/ML/DL, Data Science, Full Stack, DevOps, etc. |
-| `skills_required` | Required tech skills comma-separated |
-| `is_fresher_friendly` | Boolean — 0-2 yrs experience roles |
-| `experience_min_yrs` | Minimum experience needed |
-| `salary_tier` | Entry / Mid / Senior / Premium classification |
+- **Source**: [FILL: where the data came from, e.g. Kaggle link or 'synthetic/generated by me'; state this honestly]
+- **Collected/generated on**: [FILL]
+- **Key Columns**:
+  - `job_title`: Position title (e.g. Data Scientist, AI/ML Engineer, Full Stack Developer).
+  - `company_name`: Hiring company name.
+  - `primary_city`: Major Indian tech hub (Bangalore, Hyderabad, Pune, Mumbai, Gurgaon, Noida, Chennai).
+  - `salary_midpoint_lpa`: Midpoint annual package in Lakhs Per Annum (LPA).
+  - `work_mode`: On-site, Hybrid, or Remote.
+  - `skill_domain`: AI/ML/DL, Data Science, Software Engineering, Cloud & DevOps, Business Intelligence.
+  - `skills_required`: Comma-separated list of technical skills and tools.
+  - `is_fresher_friendly`: Boolean flag indicating 0–2 years experience entry level.
+  - `experience_min_yrs` / `experience_max_yrs`: Experience range in years.
 
-> **Note:** The raw CSV (`indian_tech_jobs_2026.csv`) is excluded from this repo via `.gitignore` due to its size (~14 MB). Use the Supabase database directly or download the dataset separately.
+> **Note:** The raw CSV file (`indian_tech_jobs_2026.csv`) is excluded from git via `.gitignore`. The dataset is populated into the Supabase database using `seed_supabase.py`.
 
 ---
 
-## AI Engine
+## Data Notes
 
-The NL-to-SQL pipeline in `nl2sql/services.py` works as follows:
+- **Undisclosed Salaries**: 88.1% of job postings (20,435 out of 23,201 records) do not disclose compensation (`salary_midpoint_lpa = 0` or NULL) [FILL: real percentage from query]. Consequently, all salary statistics (averages, distributions, domain benchmarks) must explicitly exclude zero/NULL values (`WHERE salary_midpoint_lpa > 0`). Including undisclosed salaries as zeros artificially depresses the overall average to ~1.8 LPA, whereas the true average of disclosed postings is **15.3 LPA**.
+- **Masked Company Names**: Several listings (~14 records) feature confidential or masked recruiter names (e.g., marked as "Confidential", "Anonymous", or recruitment agencies hiring on behalf of clients).
+- **"0-0 Yrs" Experience Rows**: 1,161 listings (5.0%) specify "0-0 Yrs" experience (`experience_min_yrs = 0` and `experience_max_yrs = 0`), representing entry-level/internship roles or postings where experience requirements were omitted.
+- **"Not Available" Skills**: 547 listings (2.4%) contain "Not Available" or empty strings in `skills_required` where granular technology tags were not populated by the recruiter.
+- **Skill Domain Assignment**: [FILL: explain classification methodology, e.g. rule-based keyword mapping on job_title/skills or LLM-assigned].
 
-1. User types a plain English question
-2. System prompt injects the full 26-column schema context plus strict PostgreSQL rules
-3. OpenRouter API is called with a cascade of LLMs in priority order:
-   - `meta-llama/llama-3.3-70b-instruct` (primary)
-   - `anthropic/claude-3.5-sonnet` (fallback 1)
-   - `deepseek/deepseek-r1` (fallback 2)
-   - `openai/gpt-4o-mini` (fallback 3)
-4. SQL is extracted from the code block in the LLM response
-5. Safety validation blocks any non-SELECT keywords before execution
-6. Query runs against Supabase PostgreSQL and results are returned as JSON
-7. Auto chart detection — if results have a label + numeric column and 30 or fewer rows, a Chart.js visualization is offered
+---
+
+## Key Insights
+
+- **Top-Paying Domains**: [FILL: finding with number, from my own query]
+- **Work Mode Distribution**: [FILL: finding with number, from my own query]
+- **Fresher Opportunities**: [FILL: finding with number, from my own query]
+- **Top Demanded Skills**: [FILL: finding with number, from my own query]
+
+---
+
+## How It Works & Safety
+
+### 7-Step NL2SQL Execution Pipeline
+
+1. **User Prompt**: The user inputs a question in natural language (e.g., *"Show top 5 companies hiring remote Data Scientists"*).
+2. **Schema & Rule Injection**: The system combines the user question with full 26-column schema metadata and PostgreSQL instructions in `nl2sql/services.py`.
+3. **LLM Generation via OpenRouter**: Queries the OpenRouter API using model fallback priority (`meta-llama/llama-3.3-70b-instruct` $\rightarrow$ `anthropic/claude-3.5-sonnet` $\rightarrow$ `deepseek/deepseek-r1` $\rightarrow$ `openai/gpt-4o-mini`).
+4. **SQL Extraction**: Extracts the clean SQL query from markdown code blocks.
+5. **Safety Validation**: Validates the query against security rules before touching the database.
+6. **Isolated Read-Only Execution**: Runs inside a transactional boundary with database-level read-only enforcement and execution timeout.
+7. **Result Delivery & Auto-Charting**: Formats results as JSON, and automatically generates Chart.js bar or doughnut charts if the query returns categorical and numerical columns.
+
+### Safety & Hardening Layer
+
+Every query submitted to `/api/nl2sql/` or `/api/run-sql/` passes through `validate_sql()`:
+
+- **Comment Stripping**: Removes single-line (`--`) and multi-line (`/* */`) comments before inspection while preserving string literals.
+- **Single Statement Enforcement**: Blocks multi-statement query chaining (rejects semicolons followed by additional text).
+- **SELECT / WITH Only**: Queries must explicitly begin with `SELECT` or `WITH`.
+- **Keyword & Function Blocklist**: Rejects whole-word dangerous keywords: `INSERT`, `UPDATE`, `DELETE`, `DROP`, `ALTER`, `TRUNCATE`, `CREATE`, `GRANT`, `REVOKE`, `COPY`, `CALL`, `DO`, `EXECUTE`, `pg_sleep`, `pg_read_file`, `pg_ls_dir`, `lo_import`, `lo_export`, `dblink`, `set_config`, `information_schema`, `pg_catalog`.
+- **Table Allowlist**: Enforces that only `indian_tech_jobs` (and CTEs defined within `WITH`) can be referenced.
+- **Read-Only Transaction**: Executed inside `transaction.atomic()` with `SET LOCAL TRANSACTION READ ONLY;`.
+- **Statement Timeout**: Enforces `SET LOCAL statement_timeout = '5s';` to block denial-of-service / long-running queries.
+- **Automatic Limit**: Appends `LIMIT 500` if no `LIMIT` clause is present.
+- **Raw SQL Gate (`ENABLE_RAW_SQL`)**: When `ENABLE_RAW_SQL=False` (default), the `/api/run-sql/` endpoint is disabled and returns `403 Forbidden`.
+
+---
+
+## Evaluation
+
+An automated benchmark compares SQL queries generated by the pipeline against 20 hand-verified golden queries on the live dataset (comparing result sets independently of column aliases and row order).
+
+See detailed methodology and results in [evaluation/RESULTS.md](evaluation/RESULTS.md).
+
+To run the evaluation:
+```bash
+python evaluation/run_eval.py
+```
+
+---
+
+## Limitations
+
+- **LLM Hallucinations**: Large Language Models can occasionally generate syntactically valid SQL that misinterprets ambiguous column semantics or invents non-existent columns.
+- **Model Dependency**: Query accuracy and generation speed depend on OpenRouter API availability and the specific model selected.
+- **Single-Table Scope**: The application schema is centered on a single table (`indian_tech_jobs`) and is not designed for multi-tenant relational schemas.
+- **Authentication & Rate Limiting**: The project is configured for local and demo use. Deploying to public networks requires adding user authentication, CSRF controls on all endpoints, and IP-based rate limiting.
+- **API Costs**: Translating queries relies on third-party commercial LLM endpoints which incur per-token API costs.
 
 ---
 
 ## Project Structure
 
 ```
-india-tech-jobs-nl2sql/
-|
-|-- manage.py                    # Django entry point
-|-- requirements.txt             # Python dependencies
-|-- .env.example                 # Environment variable template
-|-- sql.sql                      # Database schema DDL
-|-- seed_supabase.py             # Script to seed Supabase from CSV
-|
-|-- sql_nlp_project/             # Django project config
-|   |-- settings.py              # Settings (reads from .env)
-|   |-- urls.py                  # Root URL routing
-|   `-- wsgi.py
-|
-`-- nl2sql/                      # Main Django app
-    |-- apps.py
-    |-- views.py                 # All API + page view handlers
-    |-- services.py              # NL->SQL engine + query executor
-    |-- urls.py                  # App-level URL patterns
-    |-- templates/
-    |   `-- index.html           # Single-page analytics portal
-    `-- static/
-        `-- css/
-            `-- style.css        # Custom enterprise UI styles
+SQL-NLP/
+├── .env.example                 # Environment variables template
+├── .gitignore                   # Excludes .env, CSV, cache, and virtual environments
+├── LICENSE                      # Project license
+├── README.md                    # Project documentation
+├── manage.py                    # Django management script
+├── requirements.txt             # Pinned project dependencies
+├── seed_supabase.py             # Script to load CSV data into Supabase
+├── sql.sql                      # Database table schema DDL
+├── docs/
+│   └── screenshots/
+│       ├── .gitkeep
+│       ├── analysis.png
+│       └── interface.png
+├── evaluation/
+│   ├── RESULTS.md               # Accuracy evaluation report
+│   ├── questions.json           # 23 hand-verified golden test questions & queries
+│   ├── run_eval.py              # Automated accuracy evaluation script
+│   ├── test_engine.py           # Quick single-query test script
+│   └── test_multiple_queries.py # Multi-prompt test script
+├── nl2sql/                      # Main analytics and NL2SQL Django app
+│   ├── __init__.py
+│   ├── apps.py                  # App configuration
+│   ├── services.py              # NL2SQL generator, validate_sql(), and query executor
+│   ├── urls.py                  # Endpoints (/api/nl2sql/, /api/run-sql/, etc.)
+│   ├── views.py                 # Views and API handlers
+│   ├── static/
+│   │   └── css/
+│   │       └── style.css        # Dashboard and Explorer styles
+│   └── templates/
+│       └── index.html           # Single-page analytics dashboard
+├── sql_nlp_project/             # Django project configuration
+│   ├── __init__.py
+│   ├── asgi.py
+│   ├── settings.py              # Settings (DB config, ENABLE_RAW_SQL, etc.)
+│   ├── urls.py                  # Root routing
+│   └── wsgi.py
+└── tests/                       # Unit test suite
+    ├── __init__.py
+    └── test_sql_validation.py   # 25 test cases for SQL validation & security
 ```
 
 ---
 
-## API Endpoints
+## Author
 
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/` | Main analytics portal (HTML) |
-| `POST` | `/api/nl2sql/` | Convert NL to SQL and execute |
-| `POST` | `/api/run-sql/` | Execute custom SQL directly |
-| `GET` | `/api/dataset-browse/` | Paginated, filtered dataset explorer |
-
-### NL2SQL Request Example
-
-```bash
-curl -X POST http://localhost:8000/api/nl2sql/ \
-  -H "Content-Type: application/json" \
-  -d '{"prompt": "Top 5 companies paying the highest average salary for Data Scientists"}'
-```
-
----
-
-## Requirements
-
-```
-django>=4.2,<6.0
-psycopg2-binary>=2.9
-dj-database-url>=2.1
-requests>=2.31
-python-dotenv>=1.0
-pandas>=2.0
-sqlalchemy>=2.0
-```
-
----
-
-## Security Notes
-
-- All SQL is validated server-side — DROP, DELETE, INSERT, UPDATE, ALTER, TRUNCATE, CREATE, GRANT, REVOKE are blocked
-- `.env` is git-ignored — your keys are never committed
-- Use a strong, unique `SECRET_KEY` in production
-- Set `DEBUG=False` and configure `ALLOWED_HOSTS` for any public deployment
-
----
-
-## Contributing
-
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
-
-1. Fork the repo
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
----
-
-## License
-
-This project is licensed under the MIT License — see the LICENSE file for details.
-
----
-
-Built with Django, Supabase, OpenRouter, and Chart.js
+**Muhammed Irfan M A**  
+- **LinkedIn**: [https://www.linkedin.com/in/muhammed-irfan-911208251](https://www.linkedin.com/in/muhammed-irfan-911208251)  
+- **GitHub**: [https://github.com/irfan564](https://github.com/irfan564)
