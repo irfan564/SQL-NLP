@@ -33,7 +33,8 @@ A Django web application that converts plain-English questions into PostgreSQL q
 ![Analytics Portal Interface](docs/screenshots/interface.png)
 *Analytics Portal Interface: Overview KPIs, Quick Query Prompts, and Natural Language SQL Engine*
 
-![Query Execution and Analysis](docs/screenshots/analysis.png)(docs/screenshots/analysis2.png)
+![Query Execution and Analysis](docs/screenshots/analysis.png)
+![Query Execution and Analysis](docs/screenshots/analysis2.png)
 *Live Query Analysis: Natural Language Prompt, Generated PostgreSQL Query, Model Attribution, and Result Statistics*
 
 ![dashboard view](docs/screenshots/dashboard.png)
