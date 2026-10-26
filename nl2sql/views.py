@@ -10,7 +10,8 @@ CATEGORIZED_QUESTIONS = {
     "salary": [
         {"title": "Top Paying Companies", "prompt": "Top 5 companies with the highest average salary for Data Scientists"},
         {"title": "Highest Salary Tiers", "prompt": "Show top 10 job listings with salary midpoint greater than 30 LPA"},
-        {"title": "Domain Compensation", "prompt": "Average salary midpoint LPA grouped by skill domain ordered by salary descending"}
+        {"title": "Domain Compensation", "prompt": "Average salary midpoint LPA grouped by skill domain ordered by salary descending"},
+        {"title": "Salary Disclosure by Skill Domain", "prompt": "Show percentage and count of jobs with disclosed salaries grouped by skill domain"}
     ],
     "remote": [
         {"title": "Remote AI/ML Roles", "prompt": "Show all remote jobs in AI/ML paying over 15 LPA"},
@@ -20,7 +21,8 @@ CATEGORIZED_QUESTIONS = {
     "freshers": [
         {"title": "Fresher Friendly Companies", "prompt": "Top 5 companies hiring freshers with experience under 2 years"},
         {"title": "Entry Level AI Jobs", "prompt": "Show fresher friendly AI/ML engineer jobs in Bengaluru or Remote"},
-        {"title": "Fresher Salary Range", "prompt": "Average salary for jobs with experience_min_yrs <= 1"}
+        {"title": "Fresher Salary Range", "prompt": "Average salary for jobs with experience_min_yrs <= 1"},
+        {"title": "Fresher Data & Business Analyst Roles by City", "prompt": "Count of fresher friendly data analyst and business analyst jobs grouped by primary city"}
     ],
     "skills": [
         {"title": "Python & SQL Demand", "prompt": "Find jobs requiring Python, SQL, and AWS in Bengaluru or Remote"},
@@ -60,7 +62,10 @@ def index(request):
 
     city_chart = {"labels": ["Bangalore", "Hyderabad", "Pune", "Mumbai", "Gurgaon"], "values": [8450, 4210, 3890, 2650, 2100]}
     workmode_chart = {"labels": ["On-site", "Hybrid", "Remote"], "values": [16500, 4540, 2161]}
-    domain_salary_chart = {"labels": ["AI/ML/DL", "Data Science", "Software Eng", "Business Intel", "Cloud & DevOps"], "values": [18.5, 16.2, 14.8, 12.5, 15.0]}
+    domain_salary_chart = {
+        "labels": ["Cloud & DevOps (n=367)", "AI/ML/DL (n=784)", "Data Engineering (n=184)", "Data Science (n=204)", "Business Intelligence (n=1227)"],
+        "values": [19.0, 18.3, 17.2, 13.8, 12.3]
+    }
 
     try:
         with connection.cursor() as cursor:
@@ -116,16 +121,16 @@ def index(request):
                 workmode_chart["labels"] = [r[0] for r in wm_rows]
                 workmode_chart["values"] = [r[1] for r in wm_rows]
 
-            # Chart 3: Domain Salaries
+            # Chart 3: Domain Salaries (disclosed salaries only with sample sizes)
             cursor.execute("""
-                SELECT skill_domain, ROUND(AVG(salary_midpoint_lpa)::numeric, 1) as avg_sal
+                SELECT skill_domain, ROUND(AVG(salary_midpoint_lpa)::numeric, 1) as avg_sal, COUNT(*) as n
                 FROM indian_tech_jobs 
                 WHERE skill_domain IS NOT NULL AND skill_domain != '' AND salary_midpoint_lpa > 0
                 GROUP BY skill_domain ORDER BY avg_sal DESC LIMIT 5;
             """)
             ds_rows = cursor.fetchall()
             if ds_rows:
-                domain_salary_chart["labels"] = [r[0] for r in ds_rows]
+                domain_salary_chart["labels"] = [f"{r[0]} (n={r[2]})" for r in ds_rows]
                 domain_salary_chart["values"] = [float(r[1]) for r in ds_rows]
 
     except Exception as e:

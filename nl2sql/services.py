@@ -53,7 +53,7 @@ SQL Rules:
 3. Use case-insensitive searching with ILIKE for text matching (e.g. skills_required ILIKE '%python%').
 4. Always add 'LIMIT 100' unless the query uses explicit aggregations (GROUP BY, COUNT, AVG, MAX, MIN).
 5. If asking for averages or counts, use round(AVG(...)::numeric, 2) or COUNT(*).
-6. Salary statistics must exclude undisclosed salaries, i.e. WHERE salary_midpoint_lpa > 0 (also exclude NULL). Always mention this in a SQL comment.
+6. Salary statistics must exclude undisclosed salaries (salary_midpoint_lpa IS NULL or = 0). Add WHERE salary_midpoint_lpa > 0 for any average, median, min or max salary. Treat city names case-insensitively and use ILIKE patterns such as 'Pune%' when the user asks about a city.
 """
 
 def generate_sql_from_openrouter(prompt: str) -> tuple[str, str]:
